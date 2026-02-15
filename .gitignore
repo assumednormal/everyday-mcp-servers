@@ -27,3 +27,5 @@ build/
 *.db
 *.sqlite
 config/local.json
+
+*.har
