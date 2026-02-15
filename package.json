@@ -1,0 +1,16 @@
+{
+  "name": "everyday-mcp-servers",
+  "version": "0.1.0",
+  "description": "Collection of MCP servers for everyday life tasks",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT"
+}
