@@ -19,6 +19,13 @@ This document contains instructions and best practices for developing Model Cont
    - Every tool, resource, and prompt MUST include detailed descriptions
    - Test all servers with the MCP Inspector before integration (mandatory)
 
+   **Tool Description Best Practices**
+   - Tool descriptions directly guide Claude's behavior - be explicit about workflows
+   - Use directive language: "ALWAYS use X FIRST before Y" to enforce sequences
+   - Distinguish approaches: "PREFERRED: Use X after Y" vs "ALTERNATIVE: Use Z when..."
+   - Example: For shopping lists, always search → show options → user chooses → add item
+   - This prevents unwanted auto-adding and gives users control over selections
+
 3. **Code Quality**
    - Write clean, maintainable, well-documented code (no shortcuts)
    - Use meaningful variable and function names (single-letter variables only for iterators)
@@ -58,6 +65,35 @@ This document contains instructions and best practices for developing Model Cont
 - Common debugging techniques
 - Performance optimization discoveries
 
+## 🔌 External API Integration Patterns
+
+### GraphQL API Integration (Learned from HEB)
+
+**Response Structure Pitfalls**
+- Response field names frequently differ from operation names
+  - Operation: `deleteShoppingListItems` → Response: `deleteShoppingListItemsV2`
+  - Always check for "V2" or version suffixes in response fields
+- Response structures are often flatter than expected
+  - Don't assume: `response.data.wrapper.items`
+  - Verify actual: `response.data.items` or `response.data.itemPage.items`
+- Field name inconsistencies require mapping layer
+  - API: `totalItemCount`, `created`, `updated`, `fullDisplayName`
+  - Types: `itemCount`, `createdAt`, `updatedAt`, `name`
+  - Always map in transformation, never rely on 1:1 naming
+
+**Persisted Queries Pattern**
+- Some GraphQL APIs (e.g., HEB/Apollo) use persisted queries with SHA-256 hashes
+- Operation name in request ≠ response field name (verify both separately)
+- Extract hashes from HAR files or network inspection
+- Store hashes in dedicated queries file with descriptive function names
+
+**API-Specific Quirks to Document**
+When integrating a new API, document in server's README:
+- Authentication method and required credentials
+- Any API limitations (e.g., "no quantity field in mutations")
+- Workarounds implemented (e.g., "duplicate items for quantity")
+- Response structure patterns unique to that API
+
 ## 🛠️ Custom Skills
 
 The `.claude/skills/` directory contains custom skills to enhance development workflows. **Proactively create new skills** when you identify repetitive tasks or common operations.
@@ -94,11 +130,35 @@ everyday-mcp-servers/
 
 ## 🧪 Testing MCP Servers
 
+### General Testing Requirements
 - MUST test all servers with the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) before integration
 - Test ALL tools with various inputs including edge cases and invalid inputs
 - Verify error handling and validation work correctly
 - Test integration with Claude Desktop or Claude Code
 - Document test scenarios and expected behavior in each server's README
+
+### Testing Strategy for External APIs
+**CRITICAL**: When integrating with external APIs (especially GraphQL):
+
+1. **Never trust HAR file responses alone**
+   - HAR exports often have null/incomplete response bodies
+   - Always verify actual API responses with direct tests using `fetch`
+
+2. **Incremental testing approach**
+   - Step 1: Direct API test (fetch) to verify response structure
+   - Step 2: Test individual MCP tool implementation
+   - Step 3: End-to-end workflow testing
+
+3. **Response structure validation**
+   - API response field names often differ from operation names
+   - Example: Operation `addToShoppingListV2` → Response field `addShoppingListItemsV2`
+   - Don't assume nested structures - verify the actual depth
+   - Field naming is often inconsistent (e.g., `totalItemCount` vs `itemCount`, `created` vs `createdAt`)
+
+4. **Create test scripts during development**
+   - Build direct API test scripts to verify each endpoint
+   - Keep them in the server directory during development
+   - Delete before committing (they're for debugging only)
 
 ## 📦 Dependencies & Build Tools
 
