@@ -1,10 +1,6 @@
 import { defineConfig } from 'tsup';
+import { baseConfig } from '../../tsup.config.base.js';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
-  dts: true,
-  sourcemap: true,
-  clean: true,
-  shims: true,
+  ...baseConfig,
 });
