@@ -1,0 +1,35 @@
+{
+  "name": "@everyday-mcp/allrecipes",
+  "version": "0.1.0",
+  "description": "MCP server for searching and retrieving recipes from AllRecipes.com",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "watch": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: tests not implemented yet\" && exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "allrecipes",
+    "recipes",
+    "cooking"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "cheerio": "^1.0.0-rc.12",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}
