@@ -5,6 +5,7 @@ import {
   createGetShoppingListQuery,
   createAddToListQuery,
   createRemoveFromListQuery,
+  createUpdateItemQuantityQuery,
 } from '../../../src/api/queries.js';
 
 describe('createSearchProductsQuery', () => {
@@ -105,6 +106,22 @@ describe('createRemoveFromListQuery', () => {
     const input = query.variables.input as Record<string, unknown>;
     expect(input.listId).toBe('list-1');
     expect(input.itemIds).toEqual(['item-1', 'item-2', 'item-3']);
+    const page = input.page as Record<string, unknown>;
+    expect(page.sort).toBe('CATEGORY');
+    expect(page.sortDirection).toBe('ASC');
+  });
+});
+
+describe('createUpdateItemQuantityQuery', () => {
+  it('should build correct query structure with listId, itemId, and quantity', () => {
+    const query = createUpdateItemQuantityQuery('list-1', 'item-1', 3);
+    expect(query.operationName).toBe('updateShoppingListItem');
+    expect(query.extensions.persistedQuery.version).toBe(1);
+    const input = query.variables.input as Record<string, unknown>;
+    expect(input.listId).toBe('list-1');
+    expect(input.itemId).toBe('item-1');
+    const quantityOrWeight = input.quantityOrWeight as Record<string, unknown>;
+    expect(quantityOrWeight.quantity).toBe(3);
     const page = input.page as Record<string, unknown>;
     expect(page.sort).toBe('CATEGORY');
     expect(page.sortDirection).toBe('ASC');

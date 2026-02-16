@@ -10,6 +10,7 @@ const QUERY_HASHES = {
   getShoppingListV2: '085fcaef4f2f05ee16ea44c1489801e7ae7e7a95311cbf6d7a3f09135f0ea557',
   addToShoppingListV2: '6b1534f6270004656ac14944f790a993822fba67fe24c9558713016cea2217c8',
   deleteShoppingListItems: 'd680a2e6c47fe0f832af2628378af8e17da7d448c46b15e799d609a56aa13e69',
+  updateShoppingListItem: 'b57aa69ab197bcc3bface2afe47ff8b778eb1313c5caa479d41d40385af61818',
 };
 
 /**
@@ -133,6 +134,29 @@ export function createRemoveFromListQuery(
     input: {
       listId,
       itemIds,
+      page: {
+        sort: 'CATEGORY',
+        sortDirection: 'ASC',
+      },
+    },
+  });
+}
+
+/**
+ * Update the quantity of an item in a shopping list
+ */
+export function createUpdateItemQuantityQuery(
+  listId: string,
+  itemId: string,
+  quantity: number
+): GraphQLRequest {
+  return createPersistedQuery('updateShoppingListItem', {
+    input: {
+      itemId,
+      listId,
+      quantityOrWeight: {
+        quantity,
+      },
       page: {
         sort: 'CATEGORY',
         sortDirection: 'ASC',

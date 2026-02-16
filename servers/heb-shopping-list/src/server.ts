@@ -9,6 +9,7 @@ import { getShoppingLists } from './tools/get-lists.js';
 import { getListItems, GetListItemsInputSchema } from './tools/get-list-items.js';
 import { addToList, AddToListInputSchema } from './tools/add-to-list.js';
 import { removeFromList, RemoveFromListInputSchema } from './tools/remove-from-list.js';
+import { updateItemQuantity, UpdateItemQuantityInputSchema } from './tools/update-item-quantity.js';
 
 /**
  * Create and configure the MCP server
@@ -125,6 +126,29 @@ export function createServer(): Server {
             },
           },
         },
+        {
+          name: 'heb_update_item_quantity',
+          description:
+            'Update the quantity of an item in your HEB shopping list. ALWAYS use heb_get_list_items FIRST to find the item ID and see its current quantity before updating. Provide the item ID (UUID from get_list_items) and the new desired quantity.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              itemId: {
+                type: 'string',
+                description: 'The shopping list item ID (UUID) to update. Get this from heb_get_list_items.',
+              },
+              quantity: {
+                type: 'number',
+                description: 'The new quantity for the item (must be a positive integer)',
+              },
+              listId: {
+                type: 'string',
+                description: 'Shopping list ID (optional if HEB_DEFAULT_LIST_ID is set)',
+              },
+            },
+            required: ['itemId', 'quantity'],
+          },
+        },
       ],
     };
   });
@@ -187,6 +211,19 @@ export function createServer(): Server {
         case 'heb_remove_from_list': {
           const input = RemoveFromListInputSchema.parse(request.params.arguments);
           const result = await removeFromList(input);
+          return {
+            content: [
+              {
+                type: 'text',
+                text: result.message,
+              },
+            ],
+          };
+        }
+
+        case 'heb_update_item_quantity': {
+          const input = UpdateItemQuantityInputSchema.parse(request.params.arguments);
+          const result = await updateItemQuantity(input);
           return {
             content: [
               {
