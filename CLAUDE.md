@@ -101,6 +101,7 @@ The `.claude/skills/` directory contains custom skills for development workflows
 - **`gh-helper`** - GitHub CLI operations (PRs, issues, releases, CI/CD)
 - **`create-mcp-server`** - Scaffold a new MCP server with all boilerplate files following established patterns
 - **`build-server`** - Build, typecheck, test, and validate any server in the repository
+- **`live-test-server`** - Run live API tests against a server using real environment variables from `.env`
 
 ### When to Create a New Skill
 - When you find yourself running the same multi-step workflow more than twice
