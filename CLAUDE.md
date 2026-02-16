@@ -96,46 +96,89 @@ When integrating a new API, document in server's README:
 
 ## 🛠️ Custom Skills
 
-The `.claude/skills/` directory contains custom skills to enhance development workflows. **Proactively create new skills** when you identify repetitive tasks or common operations.
+The `.claude/skills/` directory contains custom skills for development workflows:
+
+- **`gh-helper`** - GitHub CLI operations (PRs, issues, releases, CI/CD)
+- **`create-mcp-server`** - Scaffold a new MCP server with all boilerplate files following established patterns
+- **`build-server`** - Build, typecheck, test, and validate any server in the repository
 
 ### When to Create a New Skill
-- GitHub operations (PRs, issues, releases) - use `gh` CLI
-- Testing workflows (running specific test suites)
-- Building and packaging MCP servers
-- Common debugging or inspection tasks
-- Deployment or release procedures
-
-### Example: GitHub Integration Skill
-For GitHub operations, create skills in `.claude/skills/` that leverage the `gh` CLI:
-- Checking PR status and reviews
-- Creating issues from bug reports
-- Managing releases and tags
-- Viewing CI/CD status
-
-**Action Item**: If you find yourself running similar GitHub commands repeatedly, create a skill for it.
+- When you find yourself running the same multi-step workflow more than twice
+- GitHub operations that require multiple `gh` commands
+- Testing or debugging workflows specific to a server
+- Release and deployment procedures
 
 ## 🏗️ Project Structure
 
 ```
 everyday-mcp-servers/
 ├── .claude/
-│   └── skills/           # Custom Claude Code skills
+│   └── skills/              # Custom Claude Code skills
 ├── servers/
-│   ├── heb-shopping-list/  # Individual MCP server
+│   ├── heb-shopping-list/   # HEB grocery shopping list MCP server
+│   ├── allrecipes/          # AllRecipes.com recipe search MCP server
 │   └── [future-server]/
-├── CLAUDE.md             # This file - keep updated!
-├── README.md             # Public documentation
-└── package.json          # Root package config
+├── tsconfig.base.json       # Shared TypeScript config (all servers extend this)
+├── tsup.config.base.ts      # Shared tsup build config (all servers import this)
+├── CLAUDE.md                # This file - keep updated!
+├── README.md                # Public documentation
+└── package.json             # Root package config
 ```
+
+## 📐 Canonical MCP Server Patterns
+
+### Shared Build Configuration
+
+- All servers extend `tsconfig.base.json` at the repository root via `"extends": "../../tsconfig.base.json"`
+- All servers import `baseConfig` from `tsup.config.base.ts` at the repository root
+- Server-specific tsconfig only sets `outDir`, `rootDir`, `include`, and `exclude`
+- Any change to compiler options should be made in the base config, not individual servers
+
+### Package.json Conventions
+
+- Name pattern: `@everyday-mcp/{server-name}`
+- Version: Start at `0.1.0`
+- Type: Always `"module"`
+- Scripts section is standardized: `build`, `dev`, `watch`, `typecheck`, `test`
+- devDependencies are identical across all servers: `@types/node`, `tsup`, `tsx`, `typescript`, `vitest`
+- `@modelcontextprotocol/sdk` and `zod` are standard dependencies for all servers
+
+### Tool File Pattern (Modular Servers)
+
+Each tool file in `src/tools/` exports:
+1. A Zod input schema (e.g., `SearchProductsInputSchema`)
+2. A TypeScript type derived from the schema (e.g., `SearchProductsInput`)
+3. An async handler function (e.g., `searchProducts`)
+
+The `server.ts` file imports these and wires them into the `CallToolRequestSchema` handler via a switch statement.
+
+### Error Handling Convention
+
+- All servers: The `CallToolRequestSchema` handler MUST catch errors and return `{ content: [{ type: 'text', text }], isError: true }` — never let errors crash the stdio transport
+- For complex servers: Use custom error classes extending a base error (see `servers/heb-shopping-list/src/utils/errors.ts`)
+- For simple servers: Direct try/catch with Error messages is acceptable
+
+### Entry Point Pattern
+
+- Server with env vars: `index.ts` calls `loadEnvironment()` then `runServer()`, with try/catch and `process.exit(1)`
+- Simple server: `index.ts` contains everything, calls `main()` with `.catch()` and `process.exit(1)`
+- Always log startup to stderr: `console.error('{Name} MCP server running on stdio')`
 
 ## 🧪 Testing MCP Servers
 
-### General Testing Requirements
+### Unit Testing
+
+- **Framework**: Use `vitest` for all servers — native ESM TypeScript support, zero config
+- **Test location**: `servers/{name}/__tests__/unit/`
+- **Test script**: `"test": "vitest run"` in each server's package.json
+- **Mocking**: Mock all external APIs using `vi.mock()` and `vi.stubGlobal('fetch', ...)` — no network calls in tests
+- **What to test**: Zod schema validation, data transformation/mapping, error handling, custom error classes, query builders, MCP tool routing
+
+### MCP Inspector Testing
+
 - MUST test all servers with the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) before integration
 - Test ALL tools with various inputs including edge cases and invalid inputs
 - Verify error handling and validation work correctly
-- Test integration with Claude Desktop or Claude Code
-- Document test scenarios and expected behavior in each server's README
 
 ### Testing Strategy for External APIs
 **CRITICAL**: When integrating with external APIs (especially GraphQL):
@@ -155,11 +198,6 @@ everyday-mcp-servers/
    - Don't assume nested structures - verify the actual depth
    - Field naming is often inconsistent (e.g., `totalItemCount` vs `itemCount`, `created` vs `createdAt`)
 
-4. **Create test scripts during development**
-   - Build direct API test scripts to verify each endpoint
-   - Keep them in the server directory during development
-   - Delete before committing (they're for debugging only)
-
 ## 📦 Dependencies & Build Tools
 
 - Use the official `@modelcontextprotocol/sdk` for all MCP implementations
@@ -167,6 +205,8 @@ everyday-mcp-servers/
 - Use TypeScript exclusively (configured with strict mode)
 - Use `tsup` for building all servers (consistent build tooling across project)
 - Use `tsx` for development/watch mode
+- Use `vitest` for unit testing all servers
+- Use `zod` for input validation and environment variable schemas
 
 ## 🚀 Distribution
 
